@@ -1,55 +1,90 @@
 "use strict";
 
-const number = document.querySelector(".number");
-const guess = document.querySelector(".guess");
-const message = document.querySelector(".message");
-const btnCheck = document.querySelector(".check");
-const btnAgain = document.querySelector(".again");
-const score = document.querySelector(".score");
-const highScore = document.querySelector(".highscore");
-
-// start the game
-const guestNum = Math.trunc(Math.random() * 20) + 1;
-// number.textContent = guestNum;
-let fullScore = 20;
-let highScoreOfAllTime = 0;
-
-// condtion of game
-
-const wrongGuess = function () {
-  if (fullScore > 1) {
-    let status = guess.value > guestNum ? "high" : "low";
-    message.textContent = `Your guess is too ${status}.`;
-    fullScore--;
-    score.textContent = fullScore;
-  } else {
-    score.textContent = 0;
-    message.textContent = "You lose!";
-    document.body.style.backgroundColor = "#FF0000";
-  }
+// Cache DOM queries and use event delegation where possible
+const elements = {
+  number: document.querySelector(".number"),
+  guess: document.querySelector(".guess"),
+  message: document.querySelector(".message"),
+  btnCheck: document.querySelector(".check"),
+  btnAgain: document.querySelector(".again"),
+  score: document.querySelector(".score"),
+  highScore: document.querySelector(".highscore")
 };
 
-btnCheck.addEventListener("click", function () {
-  const inputNum = guess.value;
-  if (!inputNum) {
-    message.textContent = "Please Input the Number.";
-  } else if (inputNum == guestNum) {
-    message.textContent = "Correct Number.";
-    if (fullScore > highScoreOfAllTime) {
-      highScoreOfAllTime = fullScore;
-      highScore.textContent = highScoreOfAllTime;
-    }
-    document.body.style.backgroundColor = "#60b347";
-  } else if (inputNum !== guestNum) {
-    wrongGuess();
-  }
-});
+// Game state
+let gameState = {
+  secretNumber: Math.trunc(Math.random() * 20) + 1,
+  score: 20,
+  highScore: 0
+};
 
-btnAgain.addEventListener("click", function () {
-  number.textContent = "?";
-  message.textContent = "Start guessing...";
-  guess.value = "";
-  fullScore = 20;
-  score.textContent = fullScore;
-  document.body.style.backgroundColor = "#000";
+// Initialize display
+elements.highScore.textContent = gameState.highScore;
+
+// Handle check button click
+const handleCheck = function () {
+  const inputNum = elements.guess.value;
+  
+  if (!inputNum) {
+    elements.message.textContent = "Please Input the Number.";
+    return;
+  }
+  
+  const inputValue = Number(inputNum);
+  
+  if (inputValue === gameState.secretNumber) {
+    // Win condition
+    elements.message.textContent = "Correct Number.";
+    elements.number.textContent = gameState.secretNumber;
+    
+    if (gameState.score > gameState.highScore) {
+      gameState.highScore = gameState.score;
+      elements.highScore.textContent = gameState.highScore;
+    }
+    
+    document.body.style.backgroundColor = "#60b347";
+  } else {
+    // Wrong guess
+    if (gameState.score > 1) {
+      const status = inputValue > gameState.secretNumber ? "high" : "low";
+      elements.message.textContent = `Your guess is too ${status}.`;
+      gameState.score--;
+      elements.score.textContent = gameState.score;
+    } else {
+      elements.score.textContent = 0;
+      elements.message.textContent = "You lose!";
+      document.body.style.backgroundColor = "#FF0000";
+    }
+  }
+  
+  // Clear input after each guess for better UX
+  elements.guess.value = "";
+  elements.guess.focus();
+};
+
+// Handle reset button click
+const handleReset = function () {
+  gameState = {
+    secretNumber: Math.trunc(Math.random() * 20) + 1,
+    score: 20,
+    highScore: gameState.highScore
+  };
+  
+  elements.number.textContent = "?";
+  elements.message.textContent = "Start guessing...";
+  elements.guess.value = "";
+  elements.score.textContent = gameState.score;
+  document.body.style.backgroundColor = "#222";
+  elements.guess.focus();
+};
+
+// Event listeners
+elements.btnCheck.addEventListener("click", handleCheck);
+elements.btnAgain.addEventListener("click", handleReset);
+
+// Add keyboard support for better UX (Enter key to check)
+elements.guess.addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    handleCheck();
+  }
 });
